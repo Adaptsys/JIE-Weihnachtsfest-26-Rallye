@@ -1,1 +1,1 @@
-# JIE-Weihnachtsfest-26-Rallye-
+# JIE-Weihnachtsfest-26-Rallye
