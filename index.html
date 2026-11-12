@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>JIE Punsch-Rallye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@500;700&family=UnifrakturMaguntia&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: one-column phone app — sticky race header, station card, fixed tab bar at the bottom. Night-run look, single theme. */
+:root{
+  --night:#0d1626; --panel:#16223a; --panel2:#1d2c49; --line:#2b3d5f;
+  --snow:#eef3fb; --mute:#9db0cf; --punch:#e8475b; --gold:#f4c35a; --ok:#4fd18b; --bad:#ff8a7a;
+  --bib:#f7f4ec; --bibink:#13203a; --parch:#efe2c2; --parchink:#3b2a14;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --fraktur:"UnifrakturMaguntia","Old English Text MT",Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--night);color:var(--snow);font-family:var(--body);font-size:16px;line-height:1.45;
+  background-image:radial-gradient(1px 1px at 20% 30%,#ffffff22 50%,transparent 51%),radial-gradient(1.5px 1.5px at 70% 12%,#ffffff1c 50%,transparent 51%),radial-gradient(1px 1px at 45% 75%,#ffffff18 50%,transparent 51%);
+  background-size:180px 180px,240px 240px,200px 200px;min-height:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--night)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--gold)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 120px;display:flex;flex-direction:column;gap:18px}
+.wrap.wide{max-width:820px}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;line-height:.95;margin:0;text-wrap:balance}
+h1{font-size:clamp(46px,13vw,68px);font-weight:900}
+h2{font-size:34px;font-weight:900}
+h3{font-size:22px;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.mute{color:var(--mute)}
+.small{font-size:14px}
+.demo{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.06em}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--night) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top .in{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;align-items:center;gap:12px}
+.minibib{background:var(--bib);color:var(--bibink);font-family:var(--display);font-weight:900;font-size:22px;padding:2px 9px;border-radius:4px;line-height:1.1;border:0;cursor:default;touch-action:manipulation}
+.top .team{flex:1;min-width:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.stat b{display:block;font-size:17px}
+.stat span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.teambtn{background:var(--bib);color:var(--bibink);border:0;border-radius:8px;padding:12px 8px 10px;text-align:center;display:flex;flex-direction:column;gap:2px;transition:transform .15s}
+.teambtn:hover{transform:translateY(-2px) rotate(-1deg)}
+.teambtn .n{font-family:var(--display);font-weight:900;font-size:46px;line-height:.9}
+.teambtn .t{font-weight:800;font-size:14px;line-height:1.2}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.rules{display:flex;flex-direction:column;gap:8px;padding:0;margin:0;list-style:none}
+.rules li{display:flex;gap:10px}
+.rules li b{color:var(--gold);font-family:var(--mono);flex:0 0 auto}
+
+.route{display:flex;align-items:center}
+.route .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--mute);background:var(--night);flex:0 0 auto}
+.route .seg{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 10px)}
+.route .dot.done{background:var(--ok);border-color:var(--ok);color:var(--night)}
+.route .dot.now{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 4px #f4c35a22}
+.route .seg.done{background:var(--ok)}
+
+/* medieval riddle scroll */
+.scroll{background:var(--parch);color:var(--parchink);border-radius:4px;padding:18px 18px 16px;position:relative;font-family:Georgia,"Times New Roman",serif;font-size:17px;line-height:1.55;box-shadow:inset 0 0 40px #a8875033}
+.scroll::before,.scroll::after{content:"";position:absolute;left:-6px;right:-6px;height:12px;background:#d8c49a;border-radius:6px}
+.scroll::before{top:-6px}.scroll::after{bottom:-6px}
+.scroll .init{font-family:var(--fraktur);font-size:56px;float:left;line-height:.8;margin:6px 8px 0 0;color:#8e2132}
+.scroll .head{font-family:var(--fraktur);font-size:24px;display:block;margin-bottom:6px;color:#8e2132}
+.reveal{background:var(--panel2);border-left:4px solid var(--gold);border-radius:6px;padding:10px 14px}
+
+.btn{border:0;border-radius:10px;padding:14px 18px;font-weight:800;font-size:17px;background:var(--punch);color:#fff;text-align:center;width:100%}
+.btn.ghost{background:transparent;border:2px solid var(--line);color:var(--snow)}
+.btn.gold{background:var(--gold);color:var(--bibink)}
+.btn.slim{padding:10px;font-size:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.q{font-size:20px;font-weight:800;line-height:1.3}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opts.two{display:grid;grid-template-columns:1fr 1fr}
+.opt{background:var(--panel2);border:2px solid var(--line);border-radius:10px;padding:14px;text-align:left;font-size:17px;font-weight:600;display:flex;gap:12px;align-items:center;min-width:0}
+.opts.two .opt{padding:12px 10px;font-size:15px;justify-content:center;text-align:center}
+.opt .k{font-family:var(--mono);font-weight:700;color:var(--gold);width:22px;flex:0 0 auto}
+.opt:not(:disabled):hover{border-color:var(--gold)}
+.opt.wrong{border-color:var(--bad);text-decoration:line-through;opacity:.6}
+.opt:disabled{cursor:not-allowed}
+.feedback{border-radius:10px;padding:12px 14px;font-weight:600}
+.feedback.ok{background:#4fd18b22;color:var(--ok)}
+.feedback.bad{background:#ff8a7a1f;color:var(--bad)}
+.feedback.info{background:var(--panel2);color:var(--snow);font-weight:400}
+.qcount{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+
+/* picture puzzles */
+.rebus{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;background:var(--bib);border-radius:12px;padding:18px 10px}
+.rebus .pic{font-size:64px;line-height:1}
+.rebus .plus{font-family:var(--display);font-weight:900;font-size:40px;color:var(--bibink)}
+.rebus img{max-height:220px;border-radius:6px}
+.picks{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pick{aspect-ratio:1/1;max-width:100%;background:var(--bib);border:3px solid var(--line);border-radius:12px;display:grid;place-items:center;padding:8px;overflow:hidden}
+.pick:hover{border-color:var(--gold)}
+.pick img{width:100%;height:100%;object-fit:contain}
+.phlogo{display:inline-block;font-family:var(--display);font-weight:900;font-size:56px;color:var(--bibink);border-bottom:8px solid var(--punch);padding:0 6px;line-height:1}
+.phlogo.flip{transform:scaleX(-1)}
+
+/* games */
+.tapzone{aspect-ratio:1/1;max-width:100%;width:100%;border-radius:50%;border:0;background:radial-gradient(circle at 50% 40%,#ff6b7d,var(--punch) 60%,#b52d40);color:#fff;font-family:var(--display);font-weight:900;font-size:clamp(60px,22vw,110px);touch-action:manipulation;user-select:none;-webkit-user-select:none;box-shadow:0 10px 0 #8e2132}
+.tapzone:active{transform:translateY(6px);box-shadow:0 4px 0 #8e2132}
+.tapzone small{display:block;font-family:var(--body);font-size:16px;font-weight:600;letter-spacing:.04em}
+.meter{height:12px;background:var(--panel2);border-radius:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--gold);transition:width .1s}
+.bignum{font-family:var(--display);font-weight:900;font-size:64px;line-height:.9;font-variant-numeric:tabular-nums}
+.lens{aspect-ratio:4/3;max-width:100%;border-radius:12px;overflow:hidden;background:linear-gradient(#2a4577,#dfe8f5 78%,#fff);display:grid;place-items:center;border:4px solid var(--bib)}
+.lens .pic{font-size:clamp(110px,40vw,170px);line-height:1}
+.lens img.pic{width:100%;height:100%;object-fit:cover;transform:scale(1.15)}
+.hilltime{font-family:var(--mono);font-weight:700;font-size:clamp(48px,16vw,72px);text-align:center;font-variant-numeric:tabular-nums;color:var(--gold);line-height:1}
+
+.letter{width:96px;height:120px;margin:0 auto;background:var(--bib);color:var(--bibink);font-family:var(--display);font-weight:900;font-size:96px;display:grid;place-items:center;border-radius:8px;transform:rotate(-4deg);animation:pop .5s ease-out}
+@keyframes pop{from{transform:scale(.4) rotate(-20deg)}to{transform:scale(1) rotate(-4deg)}}
+.letters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.letters span{width:44px;height:54px;background:var(--bib);color:var(--bibink);font-family:var(--display);font-weight:900;font-size:40px;display:grid;place-items:center;border-radius:5px}
+
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-weight:700;font-size:14px}
+.field input:not([type=file]),.field select,.field textarea{background:var(--night);border:2px solid var(--line);border-radius:10px;padding:12px;font-size:17px;width:100%;min-width:0}
+.field textarea{font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical}
+.field input[type=file]{font-size:14px;color:var(--mute);max-width:100%}
+.subs{display:flex;flex-direction:column;gap:10px}
+.sub{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;background:var(--panel2);border-radius:10px;padding:8px}
+.sub img{width:64px;height:64px;object-fit:cover;border-radius:6px}
+.sub .info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.sign{display:inline-block;background:#1f5fae;color:#fff;font-weight:800;padding:2px 8px;border-radius:3px;border:2px solid #fff;font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start}
+.pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;align-self:flex-start;white-space:nowrap}
+.pill.pending{background:#f4c35a26;color:var(--gold)}
+.pill.ok{background:#4fd18b26;color:var(--ok)}
+.pill.no{background:#ff8a7a26;color:var(--bad)}
+.pill.run{background:#9db0cf26;color:var(--mute)}
+
+.qgroup{display:flex;flex-direction:column;gap:10px}
+.quest{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.quest.done{opacity:.6}
+.quest .qh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.quest .qt{min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.quest .qp{font-family:var(--mono);font-weight:700;color:var(--gold);white-space:nowrap}
+.quest .qp small{color:var(--mute);font-weight:500}
+.qform{display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hats{display:flex;gap:6px}
+.hats i{width:22px;height:20px;background:var(--punch);clip-path:polygon(50% 0,100% 75%,100% 100%,0 100%,0 75%);border-bottom:5px solid var(--snow);display:block}
+.hats i.gone{background:var(--line);border-bottom-color:var(--line)}
+
+/* reindeer + snow */
+.deer{position:fixed;right:0;top:38%;z-index:7;border:0;background:var(--bib);border-radius:44px 0 0 44px;font-size:46px;line-height:1;padding:8px calc(10px + env(safe-area-inset-right,0px)) 8px 16px;box-shadow:-4px 4px 0 #0006;animation:peek .5s ease-out,wiggle 1.2s .5s ease-in-out infinite}
+@keyframes peek{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg) translateX(-4px)}}
+.snowfall{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+.snowfall i{position:absolute;top:-30px;font-style:normal;color:#fff;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(300deg)}}
+
+/* orga */
+.orga-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.chip b{display:block;font-family:var(--display);font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.chip span{font-size:12px;color:var(--mute)}
+.chip.warn b{color:var(--gold)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:780px;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:500}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+th.num{text-align:right}
+tr:last-child td{border-bottom:0}
+tr.lead td{background:#f4c35a12}
+td.late{color:var(--gold);font-weight:700}
+.prog{display:flex;gap:3px}
+.prog i{width:14px;height:8px;border-radius:2px;background:var(--line)}
+.prog i.on{background:var(--ok)}
+.prize{background:var(--gold);color:var(--bibink);border-radius:10px;padding:10px 14px;font-weight:700}
+.orga{display:flex;gap:6px;flex-wrap:wrap}
+.orga button,.mini{background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;font-weight:700}
+.orga button.y{border-color:var(--ok);color:var(--ok)}
+.orga button.n{border-color:var(--bad);color:var(--bad)}
+.adjrow{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px dashed var(--line);padding-top:8px}
+.adjrow span{min-width:0}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr)}
+.tabs button{background:none;border:0;padding:12px 4px;font-weight:800;font-size:14px;color:var(--mute);border-top:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs button span{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.06em}
+.tabs button.on{color:var(--snow);border-top-color:var(--punch)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:var(--bibink);font-weight:800;padding:10px 16px;border-radius:99px;z-index:8;max-width:calc(100% - 32px);text-align:center;animation:toastin .25s ease-out}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<main class="wrap" id="view"></main>
+<nav class="tabs" id="tabs" hidden></nav>
+<div id="deerbox"></div>
+<div id="toastbox"></div>
+
+<script>
+/* =====================================================================
+   INHALTE – alles, was ihr anpassen wollt, steht in diesem Block
+   ===================================================================== */
+const TEAMS=[
+  {num:"07",name:"Rudolphs Raketen"},
+  {num:"24",name:"Glühwein-Gang"},
+  {num:"12",name:"Zimtstern-Sprinter"},
+  {num:"31",name:"Lebkuchen-Express"}
+];
+const ORGA_PIN="1224";            // nur Demo – in der echten Version prüft das der Server
+const SOLUTION="KEKS";            // Buchstaben der vier Stationen
+const JOKER_COST=50;              // Ort verraten
+const PENALTY=15;                 // Sekunden Strafzeit bei falscher Antwort
+const PIC_PTS=100;                // Bilderrätsel: ein Versuch, richtig = Punkte, falsch = 0
+
+/* Mini-Spiel EAP: Linsen-Schärfe. img: Pfad zu eurem Foto (leer = Emoji-Platzhalter) */
+const LENS={img:"",emoji:"🦌",answer:0,options:["Rentier","Schlitten","Nussknacker","Lebkuchenmann","Teddybär","Weihnachtsgans"],
+  secs:30,max:150,min:30,wrongCost:40};
+/* Mini-Spiel Mühlenstraße: Bergwertung. Die Zahl, die oben am Berg klebt */
+const HILL_CODE="2412";
+const HILL_PTS=[150,110,80,50];   // Punkte für die schnellste, zweit-, dritt- und viertschnellste Zeit
+/* Sidequest Rentier-Alarm: zwei Besuche in der ersten Stunde (Minuten nach dem Start) */
+const DEER_WINDOWS=[[8,25],[32,55]];
+const DEER_PTS=50, DEER_GONE=180; // 1 Punkt weniger pro Sekunde; nach 180 s ist es weg
+
+/* Fragetypen: ohne type = Multiple Choice · type:"word" = Bilderrätsel mit Lösungswort · type:"pick" = Original antippen */
+const STATIONS=[
+  {id:"eap",title:"Ernst-Abbe-Platz",letter:"K",game:"lens",
+   riddle:"Höret, ihr wackren Läufer! Ziehet hin zu jenem Platze, der den Namen des weisen Glasmeisters träget, welcher einst an Herrn Zeissens Seite die schärfsten Linsen im ganzen Reiche ersann. Allda stehen fünf wundersame Ungetüme aus Eisen, von einem Meister aus dem fernen Lande Amerika geschmiedet. Sie schauen gar aus, als hätt ein Drache sein Gedärm verloren. Zu ihren Füßen harret euer die Kunde.",
+   qs:[
+    {q:"Der Namensgeber dieses Platzes führte im Jahr 1900 bei Zeiss etwas ein, das damals fast unerhört war. Was?",o:["Den Achtstundentag","Die Vier-Tage-Woche","Gleitzeit"],a:0},
+    {q:"Kurz vor dem Ziel überholst du den Zweiten. Auf welchem Platz liegst du jetzt?",o:["Auf Platz 1","Auf Platz 2","Auf Platz 3"],a:1,
+     fact:"Wer den Zweiten überholt, ist selbst Zweiter. Der Erste läuft immer noch vorn."},
+    {q:"Bei einem Marathon verbrennt ein*e 75-kg-Läufer*in rund 3.000 kcal. Wie viele Scheiben Christstollen (je 100 g) sind das ungefähr?",o:["Ca. 3 Scheiben","Ca. 8 Scheiben","Ca. 20 Scheiben"],a:1},
+    {type:"word",q:"Bilderrätsel: Welches Wort ist gesucht?",pics:["❄️","👨"],img:"",answers:["Schneemann"]}
+   ]},
+  {id:"teufel",title:"Teufelslöcher",letter:"E",game:"sprint",
+   riddle:"Wandert über die Saale gen Morgen, an den Fuß der Kernberge. Dort tun sich Höhlen im Felsen auf, so alt, dass schon die Schreiber vor siebenhundert Jahren ihrer gedachten. Das Volk heißet sie nach dem Höllenfürsten selbst. Fürchtet euch nicht! Vor der Pforte des Gehörnten findet ihr, was ihr suchet.",
+   qs:[
+    {q:"Rentieraugen können etwas, das kein Läuferauge kann: Sie wechseln im Winter die Farbe. Wie?",o:["Von Gold zu Blau","Von Braun zu Rot","Von Grün zu Grau"],a:0,
+     fact:"Im dunklen Polarwinter werden die Augen blau und damit viel lichtempfindlicher."},
+    {q:"Beim „Man versus Horse Marathon“ in Wales laufen Menschen seit 1980 gegen Reiter mit Pferd. Hat je ein Mensch gewonnen?",o:["Nein, noch nie","Ja, aber nur eine Handvoll Mal","Ja, fast jedes Jahr"],a:1},
+    {q:"Laut einer bekannten Scherz-Rechnung von Physikern: Wie schnell muss der Weihnachtsschlitten fliegen, um alle Kinder in einer Nacht zu beliefern?",o:["Ca. 1.000 km/h, wie ein Flugzeug","Ca. 1.000 km pro Sekunde","Exakt Lichtgeschwindigkeit"],a:1},
+    {type:"word",q:"Bilderrätsel: Welches Wort ist gesucht?",pics:["🧊","🐻"],img:"",answers:["Eisbär"]}
+   ]},
+  {id:"muehle",title:"Mühlenstraße",letter:"K",game:"hill",
+   riddle:"Suchet die Gasse, benannt nach jenen Häusern, wo Wasserräder klappern und der Müller das Korn zu Mehl zermahlet. Gar steil führet sie bergan, auf dass euch der Odem fehle wie einem Knechte nach dem Tanze. Wo das eiserne Ross auf seiner Brücke drüberhin donnert, dort harret die Kunde.",
+   qs:[
+    {q:"Seit 1925 wird jedes Jahr am 31. Dezember die berühmte „Corrida de São Silvestre“ gelaufen. In welcher Stadt?",o:["Lissabon","São Paulo","Madrid"],a:1},
+    {q:"Bei welcher Temperatur werden statistisch die schnellsten Marathonzeiten gelaufen?",o:["Bei ca. 5–10 °C","Bei ca. 15–18 °C","Bei ca. 20–23 °C"],a:0,
+     fact:"Also: Heute ist eigentlich Bestzeiten-Wetter."},
+    {q:"Warum darf Glühwein nie kochen? Ab welcher Temperatur verdampft der Alkohol?",o:["Ab ca. 58 °C","Ab ca. 78 °C","Ab ca. 98 °C"],a:1},
+    {type:"word",q:"Bilderrätsel: Welches Wort ist gesucht?",pics:["🤚","👞"],img:"",answers:["Handschuh"]}
+   ]},
+  {id:"winzerla",title:"Lidl Winzerla",letter:"S",game:"beat",
+   riddle:"Ziehet gen Mittag in jenes Dorf, dessen Name nach den Leuten klinget, die an den Hängen den Wein lesen. Dort stehet ein Kaufhaus unter blau-gelbem Schilde, wo das gemeine Volk Brot, Met und Lebkuchen um wenige Heller ersteht. Vor seinen Toren, nicht drinnen, harret die Kunde. Den Kaufmann lasset in Frieden.",
+   qs:[
+    {q:"„Last Christmas“ dauert 4:27 Minuten. Wie oft darfst du es während eines Marathons höchstens komplett hören und dich trotzdem für den Boston Marathon 2027 qualifizieren? (Frauen, 18–34 Jahre, Norm 3:25:00)",o:["23-mal","46-mal","69-mal"],a:1,
+     fact:"Wegen des Cut-offs (5:17 Minuten unter der Norm) hätten fürs Startticket sogar nur 44-mal gereicht."},
+    {q:"Wie oft wurde der JIE-Song auf Spotify schon gestreamt?",o:["Ca. 500-mal","Ca. 5.000-mal","Ca. 50.000-mal"],a:1}, // TODO: echte Zahl und Antwort eintragen
+    {q:"„Last Christmas“ erschien 1984. Wann stand der Song zum ersten Mal auf Platz 1 der britischen Charts?",o:["Gleich 1984","1985","Erst 2021"],a:2,
+     fact:"36 Jahre Anlauf. Es gibt also Hoffnung für jede Bestzeit."},
+    {type:"pick",q:"Platzhalter für euer Logo-Rätsel: Welches Bild ist das Original, welches ist gespiegelt? Tippt aufs Original.",a:0,
+     tiles:[{img:"",html:'<span class="phlogo">JIE</span>'},{img:"",html:'<span class="phlogo flip">JIE</span>'}]}
+   ]}
+];
+/* Alternative zu Lidl Winzerla (näher dran), ohne den Ortsnamen:
+   title:"Schleichersee", riddle:"Ziehet zum stillen Weiher, dessen Name klinget, als ginge einer auf gar leisen Sohlen. Im Sommer badet dort das Volk, und daneben dreschen junge Recken Bälle über Netze im Sande. An der Pforte zu diesem Orte harret die Kunde." */
+const FINAL_RIDDLE="Kehret heim zu dem Orte, da ihr aufgebrochen seid. Dort wartet ein Kessel voll heißen Würzweines, verschlossen mit einem Schlosse aus Lettern. Allein, wer das rechte Wort weiß, darf trinken.";
+
+const MUETZEN=2;
+const QUESTS=[
+  {id:"graben",group:"Straßenschild",title:"Graben-Jagd",pts:50,max:5,input:"Straßenname auf dem Schild",suffix:"graben",
+   desc:"Gruppenfoto vor einem Straßenschild, das auf „-graben“ endet. Jeder Graben zählt einmal."},
+  {id:"hund",group:"Mützen-Fotos",title:"Hund mit Mütze",pts:40,max:1,desc:"Ein Hund trägt eure Nikolausmütze. Frauchen oder Herrchen vorher fragen!"},
+  {id:"senior",group:"Mützen-Fotos",title:"80+ mit Mütze",pts:40,max:1,desc:"Eine Person, die mindestens 80 ist. Fragt höflich nach dem Alter, nicht schätzen."},
+  {id:"bus",group:"Mützen-Fotos",title:"Busfahrer*in mit Mütze",pts:40,max:1,desc:"Nur an der Endhaltestelle oder in der Pause. Der Fahrplan geht vor."},
+  {id:"bart",group:"Mützen-Fotos",title:"Weißer Bart mit Mütze",pts:40,max:1,desc:"Fast schon der echte Nikolaus. Bonus-Respekt, wenn er „Ho ho ho“ sagt."},
+  {id:"bueste",group:"Mützen-Fotos",title:"Büste mit Mütze",pts:40,max:1,desc:"Ein Denkmal oder eine Büste bekommt eure Mütze. Danach wieder mitnehmen!"},
+  {id:"autogramm",group:"Spezial",title:"Autogramm",pts:60,max:1,desc:"Eine fremde Person unterschreibt auf eurem Arm oder eurer Hand. Stift selbst mitbringen."},
+  {id:"tausch",group:"Spezial",title:"Tauschhandel",pts:100,max:1,input:"Was habt ihr dafür bekommen?",
+   desc:"Tauscht eine Nikolausmütze gegen etwas anderes Weihnachtliches. Achtung: Danach fehlt euch eine Mütze für die Fotos."}
+];
+const OK_MSG=["Sauber","Richtig","Treffer","Jawoll"];
+const BAD_MSG=["Falsch. Selbst ein Rentier mit Schnupfen wüsste das.","Leider nein. Das war ein Fehltritt in den Schneematsch.","Nope. Rudolph schüttelt traurig die Nase.","Daneben! Nutzt die Strafzeit für ein paar Kniehebeläufe."];
+
+/* =====================================================================
+   ZUSTAND – wird nach jeder Aktion im Browser gespeichert (übersteht Neuladen)
+   ===================================================================== */
+const KEY="jie-punschrallye-v3";
+const newTeam=i=>({i,startedAt:0,finishedAt:0,points:0,cat:{quiz:0,spiele:0,sidequests:0,rentier:0,joker:0,finale:0},
+  step:0,order:[0,1,2,3].map(k=>(i+k)%4),letters:[],mistakes:0,jokers:0,hillMs:null,hillGaveUp:false,lastActive:0,stations:[],log:[]});
+const fresh=()=>({v:3,me:-1,tab:"station",orgaOk:false,
+  phase:"arrive",qi:0,tries:0,wrong:[],lockUntil:0,fb:null,res:null,flip:false,joker:false,
+  lens:null,hill:null,gdone:null,openQuest:null,finalErr:"",
+  deer:[],teams:TEAMS.map((t,i)=>newTeam(i)),adj:[],subs:[],seq:1});
+let S=fresh(), game=null, hillAsk=false, resetAsk=false, bibTaps=[];
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.v===3)S=Object.assign(fresh(),o)}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+const $=s=>document.querySelector(s);
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+":":"")+String(m).padStart(2,"0")+":"+String(x).padStart(2,"0")};
+const fmtHill=ms=>{const s=Math.max(0,ms)/1000,m=Math.floor(s/60);return m+":"+(s%60).toFixed(1).padStart(4,"0").replace(".",",")};
+const clock=ts=>ts?new Date(ts).toLocaleTimeString("de-DE"):"–";
+const ago=ts=>{if(!ts)return "–";const s=Math.floor((Date.now()-ts)/1000);return s<60?`vor ${s} s`:s<3600?`vor ${Math.floor(s/60)} min`:`vor ${Math.floor(s/3600)} h`};
+const norm=s=>String(s).toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/[^a-z0-9]/g,"");
+const started=()=>S.me>=0;
+const T=()=>S.teams[S.me];
+const isOrga=()=>location.hash==="#orga";
+const cur=()=>STATIONS[T().order[T().step]];
+function setHTML(el,h){if(el&&el.__h!==h){el.innerHTML=h;el.__h=h}}
+
+function toast(t){const b=$("#toastbox");b.innerHTML=`<div class="toast" role="status">${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>b.innerHTML="",2600)}
+function log(i,text,at){S.teams[i].log.push({at:at||Date.now(),text})}
+function add(p,cat,msg){const t=T();t.points+=p;t.cat[cat]+=p;if(msg)toast(msg);save();renderTop()}
+const adjSum=i=>S.adj.filter(a=>a.team===i).reduce((n,a)=>n+a.pts,0);
+function hillRank(){const l=S.teams.filter(t=>t.hillMs!=null).sort((a,b)=>a.hillMs-b.hillMs),m={};l.forEach((t,k)=>m[t.i]=HILL_PTS[k]||0);return m}
+const total=(t,hr)=>t.points+adjSum(t.i)+((hr||hillRank())[t.i]||0);
+
+/* =====================================================================
+   KOPFZEILE & TABS
+   ===================================================================== */
+function renderTop(){
+  if(!started()||isOrga()){setHTML($("#top"),"");return}
+  const t=T(), el=(t.finishedAt||Date.now())-t.startedAt;
+  setHTML($("#top"),`<header class="top"><div class="in"><button class="minibib" id="bib" aria-label="Startnummer ${TEAMS[S.me].num}">${TEAMS[S.me].num}</button><span class="team">${esc(TEAMS[S.me].name)}</span>
+  <div class="stat"><b id="clock">${fmt(el)}</b><span>Laufzeit</span></div><div class="stat"><b>${t.points+adjSum(S.me)}</b><span>Punkte</span></div></div></header>`);
+}
+function renderTabs(){
+  const n=$("#tabs"); if(!started()||isOrga()){n.hidden=true;return} n.hidden=false;
+  const mine=mySubs(), pend=mine.filter(g=>g.status==="pending").length, t=T();
+  const tabs=[["station","Station",t.finishedAt?"im Ziel":`${Math.min(t.step+1,4)}/4`],["quests","Sidequests",`${mine.filter(g=>g.status==="ok").length} erledigt${pend?" · "+pend+" offen":""}`]];
+  setHTML(n,`<div class="in">${tabs.map(([k,l,s])=>`<button class="${S.tab===k?"on":""}" data-tab="${k}">${l}<span>${s}</span></button>`).join("")}</div>`);
+}
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;S.tab=b.dataset.tab;render();window.scrollTo(0,0)});
+$("#top").addEventListener("click",e=>{ // Easter Egg: 5x auf die Startnummer tippen
+  if(!e.target.closest("#bib"))return; const now=Date.now(); bibTaps=bibTaps.filter(x=>now-x<3000); bibTaps.push(now);
+  if(bibTaps.length>=5){bibTaps=[];snow()}
+});
+function snow(){
+  toast("Hatschi! Rudolph niest. Es schneit!");
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=document.createElement("div");box.className="snowfall";
+  for(let k=0;k<45;k++){const f=document.createElement("i");f.textContent=rnd(["❄","❅","❆","•"]);
+    f.style.left=Math.random()*100+"%";f.style.fontSize=10+Math.random()*22+"px";f.style.opacity=.5+Math.random()*.5;
+    f.style.animationDuration=4+Math.random()*5+"s";f.style.animationDelay=Math.random()*3+"s";box.appendChild(f)}
+  document.body.appendChild(box);setTimeout(()=>box.remove(),12500);
+}
+
+/* =====================================================================
+   START
+   ===================================================================== */
+function viewStart(){
+  return `<div class="stack">
+    <p class="eyebrow">JIE Weihnachtslauf · Jena</p>
+    <h1>Die Punsch-Rallye</h1>
+    <p class="mute">4 Stationen quer durch Jena, Rätsel in alter Zunge, 4 Mini-Spiele und ein Glühwein-Kessel mit Buchstabenschloss. Wer stehen bleibt, friert.</p>
+  </div>
+  <section class="card"><h3>So läuft's</h3>
+   <ul class="rules">
+    <li><b>01</b><span>Startnummer wählen. Jedes Team läuft die Stationen in eigener Reihenfolge.</span></li>
+    <li><b>02</b><span>Ein Rätsel in mittelalterlicher Sprache verrät den nächsten Ort. Wer verzweifelt, zieht den Joker (−${JOKER_COST} Punkte).</span></li>
+    <li><b>03</b><span>Vor Ort den QR-Code scannen: Fragen, ein Bilderrätsel und ein Mini-Spiel. Falsch geraten heißt ${PENALTY} Sekunden Strafzeit.</span></li>
+    <li><b>04</b><span>Jede Station gibt einen Buchstaben. Am Ende ergibt das ein Lösungswort.</span></li>
+    <li><b>+</b><span>Sidequests unterwegs: Graben-Schilder, Fotos mit euren ${MUETZEN} Nikolausmützen, Autogramme, ein Tauschhandel. Und haltet in der ersten Stunde die Augen offen: Ein Rentier schaut vorbei.</span></li>
+   </ul></section>
+  <section class="stack"><h3>Startnummer wählen</h3>
+   <div class="teams">${TEAMS.map((t,i)=>`<button class="teambtn" data-team="${i}"><span class="n">${t.num}</span><span class="t">${esc(t.name)}</span></button>`).join("")}</div>
+  </section>
+  <p class="demo">Demo: <a href="#orga">Orga-Zentrale öffnen</a> (PIN ${ORGA_PIN})</p>`;
+}
+function startTeam(i){
+  const now=Date.now(); S.me=i; const t=T(); t.startedAt=now; t.lastActive=now; log(i,"Gestartet");
+  S.deer=DEER_WINDOWS.map(([a,b])=>({due:now+Math.round((a+Math.random()*(b-a))*60000),shownAt:0,caughtAt:0,pts:0,missed:false}));
+  S.teams.forEach(r=>{if(r.i!==i){r.startedAt=now-Math.floor(Math.random()*90000);r.lastActive=now;r.points=r.cat.quiz=Math.floor(Math.random()*6)*20;log(r.i,"Gestartet",r.startedAt)}});
+  render();
+}
+
+/* =====================================================================
+   STATION: Rätsel → Scan → Fragen → Mini-Spiel → Buchstabe
+   ===================================================================== */
+function route(){
+  const t=T();
+  return `<div class="route" aria-label="Fortschritt">${t.order.map((sid,k)=>{
+    const c=k<t.step?"done":k===t.step&&!t.finishedAt?"now":"";
+    return (k?`<div class="seg ${k<=t.step?"done":""}"></div>`:"")+`<div class="dot ${c}">${k<t.step?"✓":k+1}</div>`}).join("")}</div>`;
+}
+function scroll(text,head){return `<div class="scroll"><span class="head">${head}</span><span class="init">${text[0]}</span>${esc(text.slice(1))}</div>`}
+const demoFoot=()=>`<p class="demo">Demo: <a href="#orga">Orga-Zentrale</a> (PIN ${ORGA_PIN}). Die Teams sehen diesen Link später nicht.</p>`;
+function viewStation(){
+  const t=T();
+  if(t.step>=4) return viewFinale()+demoFoot();
+  const st=cur(); let body="";
+  if(S.phase==="arrive"){
+    body=`<p class="eyebrow">Nächstes Ziel · Station ${t.step+1} von 4</p>
+    ${scroll(st.riddle,"Kunde vom Wege")}
+    ${S.joker?`<div class="reveal"><span class="eyebrow">Joker</span><br><b>${esc(st.title)}</b></div>`:`<button class="btn ghost slim" data-act="joker">Joker: Ort verraten (−${JOKER_COST} Punkte)</button>`}
+    <button class="btn" data-act="scan">QR-Code scannen</button>
+    <p class="demo">Demo: Der Button ersetzt den echten QR-Scan. Später öffnet jeder Code direkt seine Station.</p>`;
+  } else if(S.phase==="quiz") body=viewQuiz(st);
+  else if(S.phase==="game") body=viewGame(st);
+  else {
+    const last=t.step===3;
+    body=`<p class="eyebrow">Station geschafft</p><h2>Euer Buchstabe</h2>
+    <div class="letter">${st.letter}</div>
+    <p class="mute" style="text-align:center">Merkt ihn euch gut. Oder schreibt ihn mit dem Finger in den Raureif.</p>
+    <button class="btn" data-act="next">${last?"Zum Finale":"Zur nächsten Kunde"}</button>`;
+  }
+  return `${route()}<section class="card">${body}</section>${demoFoot()}`;
+}
+
+/* ---------- Fragen ---------- */
+function viewQuiz(st){
+  const q=st.qs[S.qi];
+  const head=`<div class="qcount"><p class="eyebrow">${esc(st.title)}</p><span class="demo">${q.type?"Bilderrätsel":"Frage"} ${S.qi+1}/${st.qs.length}</span></div>`;
+  if(S.res) return `${head}<p class="q">${esc(q.q)}</p>
+    <div class="feedback ${S.res.ok?"ok":"bad"}">${esc(S.res.text)}</div>
+    ${q.fact&&S.res.ok?`<div class="feedback info">${esc(q.fact)}</div>`:""}
+    <button class="btn" data-act="qnext">Weiter</button>`;
+  if(q.type==="word") return `${head}<p class="q">${esc(q.q)}</p>
+    <div class="rebus">${q.img?`<img src="${esc(q.img)}" alt="Bilderrätsel">`:q.pics.map(p=>`<span class="pic">${p}</span>`).join('<span class="plus">+</span>')}</div>
+    <form id="wordform" class="stack" autocomplete="off"><div class="field"><label for="word">Lösungswort</label><input type="text" id="word" maxlength="40" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div id="worderr"></div><button class="btn" type="submit">Lösung abgeben</button></form>
+    <p class="demo">Ein Versuch · richtig ${PIC_PTS} Punkte · falsch 0 Punkte, keine Strafzeit${q.img?"":" · Platzhalter, bis eure Bilder da sind"}</p>`;
+  if(q.type==="pick"){const ord=S.flip?[1,0]:[0,1];
+    return `${head}<p class="q">${esc(q.q)}</p>
+    <div class="picks">${ord.map((k,n)=>`<button class="pick" data-pick="${k}" aria-label="Bild ${n+1}">${q.tiles[k].img?`<img src="${esc(q.tiles[k].img)}" alt="Bild ${n+1}">`:q.tiles[k].html}</button>`).join("")}</div>
+    <p class="demo">Ein Versuch · richtig ${PIC_PTS} Punkte · falsch 0 Punkte, keine Strafzeit</p>`}
+  const locked=S.lockUntil>Date.now(), left=Math.ceil((S.lockUntil-Date.now())/1000);
+  return `${head}<p class="q">${esc(q.q)}</p>
+    <div class="opts">${q.o.map((o,k)=>`<button class="opt ${S.wrong.includes(k)?"wrong":""}" data-ans="${k}" ${locked||S.wrong.includes(k)?"disabled":""}><span class="k">${"ABC"[k]}</span>${esc(o)}</button>`).join("")}</div>
+    ${locked?`<div class="feedback bad">${esc(S.fb)}<br>Strafzeit: <span id="lockleft">${left}</span> s</div>`:S.fb?`<div class="feedback bad">${esc(S.fb)} Weiter geht's.</div>`:""}
+    <p class="demo">1. Versuch 100 Punkte · 2. Versuch 50 · danach 20</p>`;
+}
+function nextQ(){
+  S.qi++;Object.assign(S,{tries:0,wrong:[],fb:null,res:null,lockUntil:0,flip:Math.random()<.5});
+  if(S.qi>=cur().qs.length){S.phase="game";game=null}
+}
+function answerMC(k){
+  const q=cur().qs[S.qi], t=T();
+  if(S.lockUntil>Date.now()||S.wrong.includes(k)||S.res)return;
+  if(k===q.a){
+    const p=S.tries===0?100:S.tries===1?50:20;
+    log(S.me,`${cur().title}, Frage ${S.qi+1}: richtig im ${S.tries+1}. Versuch (+${p})`);
+    add(p,"quiz",`${rnd(OK_MSG)}! +${p}`);
+    if(q.fact)S.res={ok:true,text:`Richtig! +${p} Punkte.`}; else nextQ();
+  } else {
+    S.tries++;t.mistakes++;S.wrong.push(k);S.fb=rnd(BAD_MSG);S.lockUntil=Date.now()+PENALTY*1000;
+    log(S.me,`${cur().title}, Frage ${S.qi+1}: falsch`);
+  }
+  render();
+}
+function answerPic(ok,solution){
+  const t=T();
+  if(S.res)return;
+  if(ok){add(PIC_PTS,"quiz",`Richtig! +${PIC_PTS}`);S.res={ok:true,text:`Richtig! +${PIC_PTS} Punkte.`}}
+  else{t.mistakes++;S.res={ok:false,text:`Leider falsch. ${solution} Keine Punkte, aber auch keine Strafzeit.`}}
+  log(S.me,`${cur().title}, Bilderrätsel: ${ok?"richtig (+"+PIC_PTS+")":"falsch"}`);
+  render();
+}
+
+/* ---------- Mini-Spiele ---------- */
+function viewGame(st){
+  if(S.gdone) return `<p class="eyebrow">Mini-Spiel · Ergebnis</p><h2>${esc(S.gdone.head)}</h2>
+    ${S.gdone.pic?lensBox(0):""}
+    <div class="feedback ${S.gdone.ok?"ok":"bad"}">${esc(S.gdone.text)}</div>
+    <button class="btn" data-act="toreward">Buchstaben abholen</button>`;
+  return {lens:viewLens,sprint:viewSprint,hill:viewHill,beat:viewBeat}[st.game]();
+}
+function gameWon(pts,head,text,extra){
+  if(pts)add(pts,"spiele");
+  log(S.me,`${cur().title}, Mini-Spiel: ${head}${pts?" (+"+pts+")":""}`);
+  S.gdone=Object.assign({ok:true,head,text},extra||{});game=null;render();
+}
+function toReward(){
+  const t=T(), st=cur(), rec=t.stations.find(x=>x.id===st.id);
+  if(S.phase!=="game")return;
+  S.phase="reward";t.letters.push(st.letter);if(rec)rec.doneAt=Date.now();
+  log(S.me,`${st.title} abgeschlossen, Buchstabe ${st.letter}`);game=null;render();
+}
+/* Linsen-Schärfe (EAP) */
+const lensEl=()=>S.lens?(Date.now()-S.lens.start)/1000:0;
+const lensBlur=()=>(26*(1-Math.min(1,lensEl()/LENS.secs))).toFixed(1);
+function lensPts(){const p=Math.min(1,lensEl()/LENS.secs);return Math.max(10,Math.round(LENS.max-(LENS.max-LENS.min)*p)-S.lens.wrong.length*LENS.wrongCost)}
+function lensBox(blur){const st=`style="filter:blur(${blur}px)"`;
+  return `<div class="lens">${LENS.img?`<img class="pic" id="lenspic" ${st} src="${esc(LENS.img)}" alt="">`:`<span class="pic" id="lenspic" ${st} aria-hidden="true">${LENS.emoji}</span>`}</div>`}
+function viewLens(){
+  if(!S.lens) return `<p class="eyebrow">Mini-Spiel</p><h2>Linsen-Schärfe</h2>
+   <p>Hier wurden einst die schärfsten Linsen der Welt erdacht. Eure ist leider beschlagen. Das Bild wird in ${LENS.secs} Sekunden langsam scharf. Je früher ihr erkennt, was es zeigt, desto mehr Punkte: von <b>${LENS.max}</b> runter auf ${LENS.min}. Jeder falsche Tipp kostet ${LENS.wrongCost}.</p>
+   <button class="btn" data-act="lens-go">Linse putzen</button>`;
+  return `<div class="qcount"><p class="eyebrow">Was ist das?</p><span class="stat"><b id="lenspts">${lensPts()}</b><span>Punkte jetzt</span></span></div>
+   ${lensBox(lensBlur())}
+   <div class="opts two">${(S.lens.order||LENS.options.map((o,k)=>k)).map(k=>`<button class="opt ${S.lens.wrong.includes(k)?"wrong":""}" data-lens="${k}" ${S.lens.wrong.includes(k)?"disabled":""}>${esc(LENS.options[k])}</button>`).join("")}</div>
+   ${LENS.img?"":`<p class="demo">Platzhalter-Motiv, bis euer Foto da ist</p>`}`;
+}
+/* Rentier-Sprint (Teufelslöcher) */
+function viewSprint(){
+  const g=game||(game={type:"sprint",state:"ready",taps:0,goal:70,end:0,tries:0});
+  if(g.state==="ready") return `<p class="eyebrow">Mini-Spiel</p><h2>Rentier-Sprint</h2>
+   <p>Ein Rentier rennt bis zu 80 km/h. Ihr habt 10 Sekunden und einen Daumen. Schafft ihr <b>${g.goal} Tipper</b>? Wechselt euch ruhig ab.</p>
+   <button class="btn" data-act="sprint-go">Auf die Plätze …</button>`;
+  if(g.state==="run"){const left=Math.max(0,(g.end-Date.now())/1000);
+   return `<div class="qcount"><span class="bignum" id="staps">${g.taps}</span><span class="stat" id="sleft"><b>${left.toFixed(1)} s</b><span>Rest</span></span></div>
+   <div class="meter"><i id="smeter" style="width:${Math.min(100,g.taps/g.goal*100)}%"></i></div>
+   <button class="tapzone" data-act="tap">TAP!<small>schneller als Rudolph</small></button>`}
+  return `<p class="eyebrow">Ergebnis</p><h2>${g.taps} Tipper</h2>
+   <div class="feedback bad">Knapp daneben. Ziel waren ${g.goal}. Das Rentier gähnt.</div>
+   <button class="btn" data-act="sprint-again">Nochmal (Versuch ${g.tries+1})</button><button class="btn ghost" data-act="game-skip">Aufgeben, 0 Punkte</button>`;
+}
+/* Bergwertung (Mühlenstraße) */
+function viewHill(){
+  if(!S.hill) return `<p class="eyebrow">Mini-Spiel</p><h2>Bergwertung</h2>
+   <p>Oben am Berg klebt eine Zahl. Eine*r von euch (oder mehrere) sprintet hoch, merkt sie sich und bringt sie zurück. <b>Das Handy bleibt unten!</b> Die Uhr stoppt erst, wenn die richtige Zahl hier eingetippt ist.</p>
+   <p class="mute small">Eure Zeit wird mit den anderen Teams verglichen. Die schnellste bringt ${HILL_PTS[0]} Punkte, danach ${HILL_PTS.slice(1).join(", ")}. Aufgelöst wird bei der Siegerehrung.</p>
+   <button class="btn" data-act="hill-go">Uhr starten und los!</button>`;
+  return `<p class="eyebrow">Bergwertung läuft</p>
+   <div class="hilltime" id="hilltime">${fmtHill(Date.now()-S.hill.start)}</div>
+   <form id="hillform" class="stack" autocomplete="off"><div class="field"><label for="hillcode">Zahl vom Berg</label><input type="text" id="hillcode" inputmode="numeric" maxlength="8"></div>
+   <div id="hillerr"></div><button class="btn gold" type="submit">Uhr stoppen</button></form>
+   <button class="btn ghost slim" data-act="hill-quit">${hillAsk?"Wirklich aufgeben? Nochmal tippen":"Aufgeben, keine Zeit"}</button>
+   <p class="demo">Demo: Oben würde euer Zettel kleben. Die Zahl lautet ${HILL_CODE}.</p>`;
+}
+/* Last-Christmas-Takt (Winzerla) */
+function viewBeat(){
+  const g=game||(game={type:"beat",taps:[],bpm:0,state:"ready"});
+  if(g.state!=="done"){const n=g.taps.length;
+    return `<p class="eyebrow">Mini-Spiel</p><h2>Last-Christmas-Takt</h2>
+     <p>Summt „Last Christmas“ und tippt 8-mal im Takt. Ohne Musik, nur aus dem Gedächtnis. Liegt ihr zwischen 100 und 115 BPM, gibt's 150 Punkte.</p>
+     <div class="meter"><i id="bmeter" style="width:${n/8*100}%"></i></div>
+     <button class="tapzone" data-act="beat"><span id="bcount">${n}</span><small>von 8 Schlägen</small></button>`}
+  return `<p class="eyebrow">Ergebnis</p><h2>${g.bpm} BPM</h2>
+   <div class="feedback bad">${g.bpm<100?"Eher „Stille Nacht“-Tempo. Etwas flotter!":"Das war „Jingle Bells“ auf Espresso. Langsamer!"}</div>
+   <button class="btn" data-act="beat-again">Nochmal</button><button class="btn ghost" data-act="game-skip">Aufgeben, 0 Punkte</button>`;
+}
+
+/* ---------- Finale ---------- */
+function viewFinale(){
+  const t=T();
+  if(t.finishedAt) return `${route()}<section class="card" style="text-align:center"><p class="eyebrow">Ziel erreicht · ${fmt(t.finishedAt-t.startedAt)}</p>
+   <h2>Der Kessel ist offen!</h2><div class="letters">${SOLUTION.split("").map(l=>`<span>${l}</span>`).join("")}</div>
+   <p>Glühwein für alle. ${esc(TEAMS[S.me].name)} hat ${t.points+adjSum(S.me)} Punkte gesammelt. Die Bergwertung kommt noch obendrauf. Wer gewonnen hat, verrät die Orga bei der Siegerehrung.</p>
+   <p class="mute small">Sidequest-Fotos könnt ihr noch einreichen, bis die Orga abpfeift.</p></section>`;
+  return `${route()}<section class="card"><p class="eyebrow">Finale</p>
+   ${scroll(FINAL_RIDDLE,"Die letzte Kunde")}
+   <p>Eure Buchstaben kamen durcheinander an. Bringt sie in die richtige Reihenfolge. Tipp: Gehört zur Weihnachtszeit wie Glühwein.</p>
+   <div class="letters">${t.letters.map(l=>`<span>${l}</span>`).join("")}</div>
+   <form id="final" class="field" autocomplete="off"><label for="sol">Lösungswort</label><input type="text" id="sol" maxlength="12">
+   ${S.finalErr?`<div class="feedback bad">${esc(S.finalErr)}</div>`:""}
+   <button class="btn gold" type="submit">Kessel öffnen</button></form></section>`;
+}
+
+/* =====================================================================
+   SIDEQUESTS
+   ===================================================================== */
+function mySubs(){return S.subs.filter(s=>s.team===S.me)}
+const qUsed=q=>mySubs().filter(s=>s.q===q.id&&s.status!=="no").length;
+const qOk=q=>mySubs().filter(s=>s.q===q.id&&s.status==="ok").length;
+const hatsLeft=()=>MUETZEN-mySubs().filter(s=>s.status!=="no"&&s.q==="tausch").length;
+function questCard(q){
+  const used=qUsed(q), ok=qOk(q), open=S.openQuest===q.id;
+  const noHat=q.group==="Mützen-Fotos"&&hatsLeft()<=0;
+  const state=ok>=q.max?`<span class="pill ok">Erledigt</span>`:used>ok?`<span class="pill pending">Wartet auf Orga</span>`:"";
+  return `<div class="quest ${ok>=q.max?"done":""}">
+   <div class="qh"><div class="qt"><b>${esc(q.title)}</b>${state}</div><span class="qp">+${q.pts}${q.max>1?` <small>${ok}/${q.max}</small>`:""}</span></div>
+   <p class="mute small">${esc(q.desc)}</p>
+   ${open?`<form class="qform" id="qform" data-q="${q.id}" autocomplete="off">
+     <div class="field"><label for="qfoto">Foto</label><input type="file" id="qfoto" accept="image/*" capture="environment"></div>
+     ${q.input?`<div class="field"><label for="qtext">${esc(q.input)}</label><input type="text" id="qtext" maxlength="60" placeholder="${q.suffix?"z. B. Löbdergraben":"z. B. ein Lebkuchenherz"}"></div>`:""}
+     <div id="qerr"></div>
+     <div class="row2"><button class="btn slim" type="submit">Einreichen</button><button class="btn ghost slim" type="button" data-qclose>Abbrechen</button></div>
+   </form>`:used>=q.max?"":noHat?`<p class="demo">Keine Mütze mehr übrig. Der Tauschhandel war teuer.</p>`:`<button class="btn ghost slim" data-qopen="${q.id}">Foto einreichen</button>`}
+  </div>`;
+}
+function subRow(s,orga){
+  const q=QUESTS.find(x=>x.id===s.q);
+  return `<div class="sub"><img src="${s.img}" alt="Foto ${esc(q.title)}"><div class="info">
+   ${orga?`<span class="demo">${esc(TEAMS[s.team].name)} · ${clock(s.at)}</span>`:""}
+   ${q.suffix?`<span class="sign">${esc(s.text)}</span>`:`<b class="small">${esc(q.title)}${s.text?" · "+esc(s.text):""}</b>`}
+   ${orga?`<div class="orga"><button class="y" data-g="${s.id}" data-v="ok">Bestätigen +${q.pts}</button><button class="n" data-g="${s.id}" data-v="no">Ablehnen</button></div>`
+     :`<span class="pill ${s.status}">${{pending:"Wartet auf Orga",ok:"+"+q.pts+" Punkte",no:"Abgelehnt"}[s.status]}</span>`}
+  </div></div>`;
+}
+function deerCard(){
+  const caught=S.deer.filter(d=>d.caughtAt), pts=caught.reduce((n,d)=>n+d.pts,0), over=S.deer.every(d=>d.caughtAt||d.missed);
+  return `<div class="quest ${over?"done":""}"><div class="qh"><div class="qt"><b>Rentier-Alarm</b>${over?`<span class="pill ok">Vorbei</span>`:""}</div><span class="qp">bis +${DEER_PTS*S.deer.length} <small>${caught.length}/${S.deer.length}</small></span></div>
+   <p class="mute small">In der ersten Stunde schaut zweimal ein Rentier am Bildschirmrand vorbei. Tippt es an! Es gibt ${DEER_PTS} Punkte, minus 1 für jede Sekunde, die ihr braucht.${caught.length?` Bisher erwischt: +${pts} Punkte.`:""}</p></div>`;
+}
+function viewQuests(){
+  const total=mySubs().filter(s=>s.status==="ok").reduce((n,s)=>n+QUESTS.find(q=>q.id===s.q).pts,0)+T().cat.rentier;
+  const groups=[...new Set(QUESTS.map(q=>q.group))], h=Math.max(0,hatsLeft());
+  return `<div class="stack"><p class="eyebrow">Extrapunkte · bisher +${total}</p><h2>Sidequests</h2>
+   <p class="mute">Zwischen den Stationen erledigen. Die Orga prüft jedes Foto und gibt die Punkte frei.</p></div>
+   ${groups.map(g=>`<section class="qgroup"><div class="qcount"><h3>${esc(g)}</h3>${g==="Mützen-Fotos"?`<span class="hats" role="img" aria-label="${h} Mützen übrig">${"<i></i>".repeat(h)}${'<i class="gone"></i>'.repeat(MUETZEN-h)}</span>`:""}</div>
+     ${g==="Mützen-Fotos"?`<p class="mute small">Die Mütze trägt immer jemand anderes, nicht ihr. Jedes Motiv zählt einmal.</p>`:""}
+     ${QUESTS.filter(q=>q.group===g).map(questCard).join("")}${g==="Spezial"?deerCard():""}</section>`).join("")}
+   <section class="stack"><h3>Eingereicht</h3>
+   ${mySubs().length?`<div class="subs">${mySubs().map(s=>subRow(s,false)).join("")}</div>`:`<p class="mute small">Noch nichts eingereicht. Irgendwo da draußen wartet ein Dackel auf eine Mütze.</p>`}</section>
+   ${demoFoot()}`;
+}
+function shrink(file){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);
+  img.onload=()=>{const sc=Math.min(1,480/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.width*sc));c.height=Math.max(1,Math.round(img.height*sc));
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.7))};
+  img.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("img"))};img.src=u})}
+async function submitQuest(e){
+  const q=QUESTS.find(x=>x.id===e.target.dataset.q), f=$("#qfoto").files[0], ti=$("#qtext"), text=ti?ti.value.trim().replace(/[.\s]+$/,""):"";
+  const err=m=>{$("#qerr").innerHTML=`<div class="feedback bad">${esc(m)}</div>`};
+  if(qUsed(q)>=q.max) return err("Diese Sidequest habt ihr schon eingereicht.");
+  if(q.input&&!text) return err(q.suffix?"Wie heißt die Straße? Ohne Namen kein Bonus.":"Was habt ihr bekommen? Die Orga will es wissen.");
+  if(q.suffix&&!new RegExp(q.suffix+"$","i").test(text)) return err(`„${text}“ endet nicht auf „${q.suffix}“. Netter Versuch.`);
+  if(q.suffix&&mySubs().some(s=>s.q===q.id&&s.status!=="no"&&norm(s.text)===norm(text))) return err(`Den ${text} habt ihr schon. Jeder zählt nur einmal.`);
+  if(!f) return err("Foto fehlt. Ohne Beweis glaubt euch die Orga kein Wort.");
+  const btn=e.target.querySelector("[type=submit]");btn.disabled=true;
+  try{const img=await shrink(f);S.subs.unshift({id:S.seq++,team:S.me,q:q.id,text,img,status:"pending",at:Date.now()});S.openQuest=null;
+    log(S.me,`Sidequest eingereicht: ${q.title}${text?" ("+text+")":""}`);toast("Eingereicht! Die Orga schaut drüber.");render()}
+  catch(x){btn.disabled=false;err("Das Foto ließ sich nicht lesen. Versucht ein anderes.")}
+}
+
+/* ---------- Rentier-Alarm ---------- */
+const busy=()=>!!game&&((game.type==="sprint"&&game.state==="run")||(game.type==="beat"&&game.state!=="done"&&game.taps.length>0));
+function deerTick(){
+  const box=$("#deerbox"), now=Date.now();
+  if(!started()){setHTML(box,"");return}
+  let act=S.deer.find(d=>d.shownAt&&!d.caughtAt&&!d.missed);
+  if(act&&now-act.shownAt>DEER_GONE*1000){act.missed=true;log(S.me,"Rentier verpasst");act=null;save();if(!isOrga()&&S.tab==="quests")render()}
+  if(!act&&!isOrga()&&!T().finishedAt&&!busy()){const d=S.deer.find(d=>!d.shownAt&&now>=d.due);if(d){d.shownAt=now;act=d;save()}}
+  setHTML(box,act&&!isOrga()?`<button class="deer" data-deer aria-label="Rentier! Schnell antippen">🦌</button>`:"");
+}
+$("#deerbox").addEventListener("click",e=>{
+  if(!e.target.closest("[data-deer]"))return;
+  const d=S.deer.find(d=>d.shownAt&&!d.caughtAt&&!d.missed); if(!d)return;
+  const secs=Math.floor((Date.now()-d.shownAt)/1000); d.caughtAt=Date.now(); d.pts=Math.max(0,DEER_PTS-secs);
+  T().lastActive=Date.now(); log(S.me,`Rentier erwischt nach ${secs} s (+${d.pts})`);
+  add(d.pts,"rentier",d.pts?`Rentier erwischt nach ${secs} s! +${d.pts}`:"Rentier erwischt, aber zu spät für Punkte.");
+  deerTick(); if(!isOrga())render();
+});
+
+/* =====================================================================
+   ORGA-ZENTRALE
+   ===================================================================== */
+function ranked(){const hr=hillRank();
+  return S.teams.map(t=>({t,total:total(t,hr),hill:hr[t.i]||0,run:t.startedAt?(t.finishedAt||Date.now())-t.startedAt:0}))
+    .sort((a,b)=>b.total-a.total||(a.t.finishedAt?a.run:Infinity)-(b.t.finishedAt?b.run:Infinity)||a.t.i-b.t.i)}
+function viewOrga(){
+  if(!S.orgaOk) return `<div class="stack"><p class="eyebrow">Nur für die Orga</p><h2>Orga-Zentrale</h2></div>
+   <form class="card" id="pin" autocomplete="off"><div class="field"><label for="pinin">PIN</label><input type="password" id="pinin" inputmode="numeric"></div>
+   <div id="pinerr"></div><button class="btn gold" type="submit">Öffnen</button></form>
+   <p class="demo">Demo-PIN: ${ORGA_PIN} · <a href="#spiel">zurück zur Team-Ansicht</a></p>`;
+  return `<div class="orga-head"><div class="stack"><p class="eyebrow">Live · nur für euch sichtbar</p><h2>Orga-Zentrale</h2></div>
+   <a href="#spiel" class="demo">← Team-Ansicht</a></div>
+   <div class="chips" id="ochips"></div><div id="olead"></div>
+   <div class="tbl" id="otbl"><table><thead><tr><th>#</th><th>Team</th><th>Fortschritt</th><th class="num">Punkte</th><th class="num">Laufzeit</th><th class="num">Zuletzt aktiv</th><th class="num">Bergwertung</th><th class="num">Fehler</th><th class="num">Joker</th></tr></thead><tbody id="otbody"></tbody></table></div>
+   <p class="demo">Punkte = Spielpunkte + Bergwertung (vorläufig, bis alle Teams am Berg waren) + eure Korrekturen. Die Teams sehen die Bergpunkte nicht.</p>
+   <section class="card"><h3>Punkte anpassen</h3>
+    <form id="adjform" class="stack" autocomplete="off">
+     <div class="field"><label for="adjteam">Team</label><select id="adjteam">${TEAMS.map((t,i)=>`<option value="${i}">${t.num} · ${esc(t.name)}</option>`).join("")}</select></div>
+     <div class="row2"><div class="field"><label for="adjpts">Punkte (+ oder −)</label><input type="number" id="adjpts" step="1" inputmode="numeric" placeholder="50 oder -20"></div>
+     <div class="field"><label for="adjreason">Grund</label><input type="text" id="adjreason" maxlength="60" placeholder="Fairplay-Bonus"></div></div>
+     <div id="adjerr"></div><button class="btn gold slim" type="submit">Buchen</button></form>
+    <div id="oadj" class="stack"></div></section>
+   <section class="stack"><h3>Fotos prüfen</h3><div id="ophotos"></div></section>
+   <section class="card"><h3>Abschlussbericht</h3>
+    <p class="mute small">Endstand, Bergwertung, alle Zeiten, Sidequests, Korrekturen und das Protokoll jedes Teams als Textdatei.</p>
+    <button class="btn slim" data-act="report">Bericht erstellen</button><div id="oreport" class="stack"></div></section>
+   <section class="stack"><p class="demo">Demo: Die anderen drei Teams werden simuliert und reichen ab und zu Beispielfotos ein.</p>
+    <button class="btn ghost slim" data-act="deer-now">Demo: Rentier jetzt losschicken</button>
+    <button class="btn ghost slim" data-act="reset">Demo komplett zurücksetzen</button></section>`;
+}
+function updateOrga(){
+  if(!isOrga()||!S.orgaOk||!$("#otbody"))return;
+  const rows=ranked(), now=Date.now(), pend=S.subs.filter(s=>s.status==="pending");
+  const going=rows.filter(r=>r.t.startedAt&&!r.t.finishedAt).length, done=rows.filter(r=>r.t.finishedAt).length;
+  setHTML($("#ochips"),`<div class="chip"><b>${going}</b><span>unterwegs</span></div><div class="chip"><b>${done}</b><span>im Ziel</span></div><div class="chip ${pend.length?"warn":""}"><b>${pend.length}</b><span>Fotos offen</span></div>`);
+  setHTML($("#olead"),rows[0].total>0?`<div class="prize">Aktuell vorn: ${esc(TEAMS[rows[0].t.i].name)} · Preis: Blackroll + Gel für jedes Teammitglied</div>`:"");
+  setHTML($("#otbody"),rows.map((r,k)=>{const t=r.t, late=t.startedAt&&!t.finishedAt&&now-t.lastActive>600000;
+    const st=t.finishedAt?`<span class="pill ok">im Ziel</span>`:!t.startedAt?`<span class="pill run">nicht gestartet</span>`:`<div class="prog">${[0,1,2,3].map(x=>`<i class="${x<t.step?"on":""}"></i>`).join("")}</div>`;
+    return `<tr class="${k===0&&r.total>0?"lead":""}"><td class="num">${k+1}</td><td><b>${esc(TEAMS[t.i].name)}</b>${t.i===S.me?' <span class="demo">(dieses Handy)</span>':""}</td><td>${st}</td>
+     <td class="num"><b>${r.total}</b></td><td class="num">${t.startedAt?fmt(r.run):"–"}</td><td class="num ${late?"late":""}">${t.finishedAt?"im Ziel":ago(t.lastActive)}</td>
+     <td class="num">${t.hillMs!=null?`${fmtHill(t.hillMs)} · +${r.hill}`:t.hillGaveUp?"aufgegeben":"–"}</td><td class="num">${t.mistakes}</td><td class="num">${t.jokers}</td></tr>`}).join(""));
+  setHTML($("#ophotos"),pend.length?`<div class="subs">${pend.map(s=>subRow(s,true)).join("")}</div>`:`<p class="mute small">Keine offenen Fotos. Die Teams sind wohl noch auf Dackelsuche.</p>`);
+  setHTML($("#oadj"),S.adj.slice().reverse().map(a=>`<div class="adjrow"><span class="small"><b>${a.pts>0?"+":""}${a.pts}</b> für ${esc(TEAMS[a.team].name)} · ${esc(a.reason)} <span class="demo">${clock(a.at)}</span></span><button class="mini" data-undo="${a.id}">Rückgängig</button></div>`).join(""));
+}
+function placeholderImg(label){
+  const c=document.createElement("canvas");c.width=c.height=120;const x=c.getContext("2d");
+  x.fillStyle="#2b3d5f";x.fillRect(0,0,120,120);x.fillStyle="#e8475b";x.beginPath();x.moveTo(60,22);x.lineTo(92,80);x.lineTo(28,80);x.fill();
+  x.fillStyle="#eef3fb";x.fillRect(26,80,68,12);x.font="bold 13px sans-serif";x.textAlign="center";x.fillText(label,60,110);return c.toDataURL("image/jpeg",.7);
+}
+/* ---------- Abschlussbericht ---------- */
+function buildReport(){
+  const rows=ranked(), L=[], pad=(s,n)=>String(s).padEnd(n), sign=n=>(n>0?"+":"")+n;
+  L.push("JIE PUNSCH-RALLYE · ABSCHLUSSBERICHT","Erstellt: "+new Date().toLocaleString("de-DE"),"");
+  L.push("ENDSTAND");
+  rows.forEach((r,k)=>L.push(`${k+1}. ${pad(TEAMS[r.t.i].name,22)} ${String(r.total).padStart(5)} Punkte   ${r.t.finishedAt?"Laufzeit "+fmt(r.run):r.t.startedAt?"nicht im Ziel (bisher "+fmt(r.run)+")":"nicht gestartet"}`));
+  L.push("","BERGWERTUNG");
+  const hl=S.teams.filter(t=>t.hillMs!=null).sort((a,b)=>a.hillMs-b.hillMs);
+  if(!hl.length)L.push("Noch keine Zeiten.");
+  hl.forEach((t,k)=>L.push(`${k+1}. ${pad(TEAMS[t.i].name,22)} ${fmtHill(t.hillMs).padStart(7)}   +${HILL_PTS[k]||0}`));
+  S.teams.filter(t=>t.hillGaveUp).forEach(t=>L.push(`-  ${pad(TEAMS[t.i].name,22)} aufgegeben   +0`));
+  rows.forEach(r=>{const t=r.t, c=t.cat, adj=S.adj.filter(a=>a.team===t.i), subs=S.subs.filter(s=>s.team===t.i);
+    L.push("","=".repeat(60),`TEAM ${TEAMS[t.i].num} · ${TEAMS[t.i].name}`,"=".repeat(60));
+    if(!t.startedAt){L.push("Nicht gestartet.");return}
+    L.push(`Start: ${clock(t.startedAt)}   Ziel: ${clock(t.finishedAt)}   Laufzeit: ${t.finishedAt?fmt(r.run):"noch unterwegs ("+fmt(r.run)+")"}`);
+    L.push(`Punkte gesamt: ${r.total}`);
+    L.push(`  Fragen und Bilderrätsel: ${c.quiz}   Mini-Spiele: ${c.spiele}   Sidequests: ${c.sidequests}   Rentier: ${c.rentier}`);
+    L.push(`  Joker: ${c.joker}   Finale: ${c.finale}   Bergwertung: ${r.hill}   Orga-Korrekturen: ${sign(adjSum(t.i))}`);
+    L.push(`Falsche Antworten: ${t.mistakes}   Joker gezogen: ${t.jokers}   Bergzeit: ${t.hillMs!=null?fmtHill(t.hillMs):t.hillGaveUp?"aufgegeben":"–"}`);
+    L.push("","Stationen:");
+    if(!t.stations.length)L.push("  –");
+    t.stations.forEach((s,k)=>{const st=STATIONS.find(x=>x.id===s.id);L.push(`  ${k+1}. ${pad(st.title,18)} angekommen ${clock(s.scannedAt)}   fertig ${clock(s.doneAt)}${s.doneAt?"   Dauer "+fmt(s.doneAt-s.scannedAt):""}`)});
+    L.push("","Sidequests:");
+    if(!subs.length)L.push("  –");
+    subs.slice().reverse().forEach(s=>{const q=QUESTS.find(x=>x.id===s.q);L.push(`  ${clock(s.at)}  ${pad(q.title+(s.text?" ("+s.text+")":""),36)} ${{pending:"offen",ok:"bestätigt +"+q.pts,no:"abgelehnt"}[s.status]}`)});
+    if(adj.length){L.push("","Orga-Korrekturen:");adj.forEach(a=>L.push(`  ${clock(a.at)}  ${sign(a.pts).padStart(5)}  ${a.reason}`))}
+    L.push("","Protokoll:");
+    t.log.forEach(e=>L.push(`  ${clock(e.at)}  ${e.text}`));
+  });
+  return L.join("\n")+"\n";
+}
+async function saveReport(){
+  const txt=$("#reptext").value, d=new Date(), name=`punschrallye-bericht-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.txt`;
+  if(window.claude&&window.claude.use){ // Vorschau bei Claude: Speichern läuft über den Viewer
+    let dl=null; try{dl=await window.claude.use("downloads")}catch(e){}
+    if(dl){try{await dl.save({filename:name,data:txt});toast("Bericht gespeichert")}catch(e){toast(e&&e.code==="declined"?"Speichern abgebrochen":"Speichern geht hier nicht. Nutzt „Kopieren“.")}return}
+    toast("Speichern geht hier nicht. Nutzt „Kopieren“.");return;
+  }
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain;charset=utf-8"}));a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast("Bericht wird heruntergeladen");
+}
+function copyReport(){
+  const ta=$("#reptext"), sel=()=>{ta.focus();ta.select();toast("Text ist markiert. Jetzt kopieren.")};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(()=>toast("Bericht kopiert"),sel); else sel();
+}
+
+/* =====================================================================
+   RENDER & EVENTS
+   ===================================================================== */
+function render(){
+  save(); renderTop(); renderTabs();
+  const v=$("#view"), orga=isOrga();
+  v.classList.toggle("wide",orga&&S.orgaOk);
+  v.innerHTML=orga?viewOrga():!started()?viewStart():S.tab==="quests"?viewQuests():viewStation();
+  if(orga)updateOrga();
+  deerTick();
+}
+window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
+
+$("#view").addEventListener("click",e=>{
+  const t=e.target.closest("[data-team],[data-act],[data-ans],[data-pick],[data-lens],[data-g],[data-undo],[data-qopen],[data-qclose]"); if(!t)return;
+  const d=t.dataset, now=Date.now();
+  if(!isOrga()&&started())T().lastActive=now;
+  if(d.team!==undefined) return startTeam(+d.team);
+  if(d.ans!==undefined) return answerMC(+d.ans);
+  if(d.pick!==undefined){const q=cur().qs[S.qi];return answerPic(+d.pick===q.a,"Das andere Bild war das Original.")}
+  if(d.lens!==undefined){const k=+d.lens; if(!S.lens||S.gdone||S.lens.wrong.includes(k))return;
+    if(k===LENS.answer){const p=lensPts(), s=Math.round(lensEl());return gameWon(p,LENS.options[LENS.answer]+"!",`Erkannt nach ${s} Sekunden. +${p} Punkte!`,{pic:true})}
+    S.lens.wrong.push(k);toast(`Nope. −${LENS.wrongCost} Punkte`);return render()}
+  if(d.qopen){S.openQuest=d.qopen;return render()}
+  if(d.qclose!==undefined){S.openQuest=null;return render()}
+  /* Orga */
+  if(d.g!==undefined){const s=S.subs.find(x=>x.id===+d.g); if(!s||s.status!=="pending")return; const q=QUESTS.find(x=>x.id===s.q), tm=S.teams[s.team];
+    s.status=d.v; if(d.v==="ok"){tm.points+=q.pts;tm.cat.sidequests+=q.pts;toast(`${q.title} bestätigt: +${q.pts} für ${TEAMS[s.team].name}`)}
+    log(s.team,`Sidequest ${q.title}: ${d.v==="ok"?"bestätigt (+"+q.pts+")":"abgelehnt"}`);save();return updateOrga()}
+  if(d.undo!==undefined){const a=S.adj.find(x=>x.id===+d.undo); if(!a)return; S.adj=S.adj.filter(x=>x!==a);
+    log(a.team,`Orga-Korrektur zurückgenommen (${a.pts>0?"+":""}${a.pts}, ${a.reason})`);save();toast("Korrektur zurückgenommen");return updateOrga()}
+  const a=d.act, g=game;
+  if(a==="joker"){if(S.joker)return;S.joker=true;T().jokers++;log(S.me,`Joker gezogen für ${cur().title} (−${JOKER_COST})`);add(-JOKER_COST,"joker",`Joker gezogen: −${JOKER_COST}`);render()}
+  else if(a==="scan"){const st=cur();Object.assign(S,{phase:"quiz",qi:0,tries:0,wrong:[],fb:null,res:null,lockUntil:0,flip:Math.random()<.5,gdone:null,lens:null,hill:null});game=null;
+    if(!T().stations.some(x=>x.id===st.id))T().stations.push({id:st.id,scannedAt:now,doneAt:0});log(S.me,`${st.title} erreicht und gescannt`);toast(`Station ${st.title} entsperrt!`);render();window.scrollTo(0,0)}
+  else if(a==="qnext"){if(!S.res)return;nextQ();render()}
+  else if(a==="next"){if(S.phase!=="reward")return;T().step++;Object.assign(S,{phase:"arrive",joker:false,gdone:null,lens:null,hill:null});game=null;hillAsk=false;render();window.scrollTo(0,0)}
+  else if(a==="toreward"||a==="game-skip"){if(a==="game-skip")log(S.me,`${cur().title}, Mini-Spiel aufgegeben`);toReward()}
+  else if(a==="lens-go"){if(!S.lens){S.lens={start:now,wrong:[],order:LENS.options.map((o,k)=>k).sort(()=>Math.random()-.5)};render()}}
+  else if(a==="sprint-go"){g.state="run";g.taps=0;g.end=now+10000;render()}
+  else if(a==="tap"){if(!g||g.state!=="run")return;g.taps++;$("#staps").textContent=g.taps;$("#smeter").style.width=Math.min(100,g.taps/g.goal*100)+"%"}
+  else if(a==="sprint-again"){g.state="ready";render()}
+  else if(a==="hill-go"){if(!S.hill){S.hill={start:now};hillAsk=false;log(S.me,"Bergwertung gestartet");render()}}
+  else if(a==="hill-quit"){if(!hillAsk){hillAsk=true;t.textContent="Wirklich aufgeben? Nochmal tippen";return}
+    T().hillGaveUp=true;hillAsk=false;log(S.me,"Bergwertung aufgegeben");S.gdone={ok:false,head:"Aufgegeben",text:"Keine Zeit, keine Bergpunkte. Der Berg hat diesmal gewonnen."};render()}
+  else if(a==="beat"){if(!g||g.state==="done")return;g.taps.push(performance.now());
+    if(g.taps.length>=8){const df=g.taps.slice(1).map((x,i)=>x-g.taps[i]);g.bpm=Math.round(60000/(df.reduce((s,x)=>s+x,0)/df.length));
+      if(g.bpm>=100&&g.bpm<=115)gameWon(150,g.bpm+" BPM","George Michael wäre stolz. +150 Punkte!"); else{g.state="done";render()}}
+    else{$("#bcount").textContent=g.taps.length;$("#bmeter").style.width=g.taps.length/8*100+"%"}}
+  else if(a==="beat-again"){game=null;render()}
+  else if(a==="report"){$("#oreport").innerHTML=`<div class="field"><label for="reptext">Bericht (Stand ${clock(now)})</label><textarea id="reptext" rows="14" readonly></textarea></div>
+     <div class="row2"><button class="btn gold slim" data-act="repsave">Als .txt speichern</button><button class="btn ghost slim" data-act="repcopy">Kopieren</button></div>`;
+    $("#reptext").value=buildReport();t.textContent="Bericht aktualisieren"}
+  else if(a==="repsave")saveReport();
+  else if(a==="repcopy")copyReport();
+  else if(a==="deer-now"){if(!started())return toast("Erst in der Team-Ansicht ein Team starten.");
+    let dd=S.deer.find(x=>!x.shownAt); if(!dd){dd={due:0,shownAt:0,caughtAt:0,pts:0,missed:false};S.deer.push(dd)} dd.due=now;save();toast("Rentier ist unterwegs. Wechselt zur Team-Ansicht!")}
+  else if(a==="reset"){if(!resetAsk){resetAsk=true;t.textContent="Wirklich alles löschen? Nochmal tippen";return}
+    resetAsk=false;S=fresh();S.orgaOk=true;game=null;try{localStorage.removeItem(KEY)}catch(x){}toast("Demo zurückgesetzt");render()}
+});
+$("#view").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=e.target.id, now=Date.now();
+  if(!isOrga()&&started())T().lastActive=now;
+  if(id==="qform") return submitQuest(e);
+  if(id==="pin"){if($("#pinin").value===ORGA_PIN){S.orgaOk=true;render()}else $("#pinerr").innerHTML=`<div class="feedback bad">Falsche PIN. Netter Versuch, Team.</div>`}
+  else if(id==="wordform"){const v=$("#word").value.trim(), q=cur().qs[S.qi];
+    if(!v){$("#worderr").innerHTML=`<div class="feedback bad">Erst ein Wort eintippen. Ihr habt nur einen Versuch.</div>`;return}
+    answerPic(q.answers.some(x=>norm(x)===norm(v)),`Gesucht war „${q.answers[0]}“.`)}
+  else if(id==="hillform"){if(!S.hill||S.gdone)return;const v=$("#hillcode").value.replace(/\s/g,"");
+    if(v===HILL_CODE){const ms=now-S.hill.start;T().hillMs=ms;gameWon(0,fmtHill(ms),"Uhr gestoppt! Wie viele Punkte das bringt, entscheidet der Vergleich mit den anderen Teams bei der Siegerehrung.")}
+    else $("#hillerr").innerHTML=`<div class="feedback bad">${v?"Falsche Zahl.":"Erst die Zahl eintippen."} Die Uhr läuft weiter!</div>`}
+  else if(id==="final"){const v=$("#sol").value.trim().toUpperCase(), t=T();
+    if(t.finishedAt)return;
+    if(v===SOLUTION){t.finishedAt=now;S.finalErr="";log(S.me,"Lösungswort richtig, im Ziel (+200)");add(200,"finale","Kessel offen! +200");render()}
+    else{S.finalErr=v?`„${v}“? Das Schloss bleibt zu. Und es lacht euch aus.`:"Das Schloss braucht schon ein Wort.";render()}}
+  else if(id==="adjform"){const team=+$("#adjteam").value, pts=Number($("#adjpts").value), reason=$("#adjreason").value.trim()||"ohne Angabe";
+    const err=m=>{$("#adjerr").innerHTML=m?`<div class="feedback bad">${esc(m)}</div>`:""};
+    if(!Number.isInteger(pts)||pts===0)return err("Bitte ganze Punkte eintragen, zum Beispiel 50 oder -20.");
+    if(Math.abs(pts)>2000)return err("Maximal 2.000 Punkte pro Buchung.");
+    err("");S.adj.push({id:S.seq++,team,pts,reason,at:now});log(team,`Orga-Korrektur ${pts>0?"+":""}${pts} (${reason})`);
+    $("#adjpts").value="";$("#adjreason").value="";save();toast(`${pts>0?"+":""}${pts} für ${TEAMS[team].name} gebucht`);updateOrga()}
+});
+
+/* ---------- Takt ---------- */
+setInterval(()=>{ // schnell: laufende Mini-Spiele
+  const now=Date.now();
+  if(game&&game.type==="sprint"&&game.state==="run"){
+    if(now>=game.end){game.tries++;if(game.taps>=game.goal)gameWon(150,game.taps+" Tipper","Das Rentier ist beeindruckt. +150 Punkte!");else{game.state="done";render()}}
+    else{const b=$("#sleft b");if(b)b.textContent=((game.end-now)/1000).toFixed(1)+" s"}
+  }
+  if(started()&&S.phase==="game"&&!S.gdone){
+    if(S.lens){const p=$("#lenspic"),n=$("#lenspts");if(p)p.style.filter=`blur(${lensBlur()}px)`;if(n)n.textContent=lensPts()}
+    if(S.hill){const h=$("#hilltime");if(h)h.textContent=fmtHill(now-S.hill.start)}
+  }
+},200);
+setInterval(()=>{ // jede Sekunde: Uhr, Strafzeit, Rentier, Orga-Tabelle
+  const now=Date.now();
+  if(started()){const c=$("#clock"),t=T();if(c)c.textContent=fmt((t.finishedAt||now)-t.startedAt)}
+  if(started()&&!isOrga()&&S.tab==="station"&&S.phase==="quiz"&&S.lockUntil){
+    if(S.lockUntil<=now){S.lockUntil=0;render()}else{const l=$("#lockleft");if(l)l.textContent=Math.ceil((S.lockUntil-now)/1000)}
+  }
+  deerTick(); updateOrga();
+},1000);
+setInterval(()=>{ // Demo: simulierte Teams
+  if(!started())return; const now=Date.now();
+  S.teams.forEach(r=>{if(r.i===S.me||r.finishedAt||!r.startedAt)return; let act=false;
+    if(Math.random()<.5){const p=rnd([20,50,100,100,150]);r.points+=p;r.cat.quiz+=p;act=true}
+    if(Math.random()<.15){r.mistakes++;act=true}
+    if(Math.random()<.12&&r.step<4){const st=STATIONS[r.order[r.step]];r.stations.push({id:st.id,scannedAt:now-60000-Math.floor(Math.random()*120000),doneAt:now});
+      if(st.game==="hill"){r.hillMs=38000+Math.floor(Math.random()*40000);log(r.i,`Bergwertung: ${fmtHill(r.hillMs)}`)}
+      r.step++;r.letters.push(st.letter);log(r.i,`${st.title} abgeschlossen`);act=true;
+      if(r.step>=4){r.finishedAt=now;r.points+=200;r.cat.finale+=200;log(r.i,"Im Ziel (+200)")}}
+    if(Math.random()<.06){const q=rnd(QUESTS);if(!S.subs.some(s=>s.team===r.i&&s.q===q.id&&s.status!=="no")){
+      S.subs.push({id:S.seq++,team:r.i,q:q.id,text:q.suffix?rnd(["Löbdergraben","Leutragraben","Fürstengraben"]):q.input?"Schokoweihnachtsmann":"",img:placeholderImg("Beispielfoto"),status:"pending",at:now});
+      log(r.i,`Sidequest eingereicht: ${q.title}`);act=true}}
+    if(act)r.lastActive=now;
+  });
+  save();
+},5000);
+render();
+</script>
+</body>
+</html>
